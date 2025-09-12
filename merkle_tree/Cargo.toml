@@ -45,6 +45,11 @@ paste = "1.0"
 proptest = "1.7.0"
 sha2 = { workspace = true }
 
+[target.wasm32-unknown-unknown.dependencies]
+# not directly used, but used by every member crate via ark-std
+# since we can't specify [target] in workspace Cargo.toml, specify here
+getrandom = { version = "^0.2", features = ["js"] }
+
 [[bench]]
 name = "merkle_path"
 harness = false

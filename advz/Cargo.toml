@@ -69,6 +69,11 @@ criterion = "0.5.1"
 jf-pcs = { workspace = true, features = ["test-srs"] }
 sha2 = { workspace = true }
 
+[target.wasm32-unknown-unknown.dependencies]
+# not directly used, but used by every member crate via ark-std
+# since we can't specify [target] in workspace Cargo.toml, specify here
+getrandom = { version = "^0.2", features = ["js"] }
+
 [[bench]]
 name = "advz"
 harness = false

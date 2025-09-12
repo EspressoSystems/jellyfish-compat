@@ -2,8 +2,8 @@
 use ark_bn254::Bn254;
 use ark_ff::{Field, PrimeField};
 use ark_std::rand::seq::SliceRandom;
+use jf_advz::advz;
 use jf_pcs::{checked_fft_size, prelude::UnivariateKzgPCS, PolynomialCommitmentScheme};
-use jf_vid::advz;
 use sha2::Sha256;
 
 mod vid;

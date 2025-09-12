@@ -24,9 +24,9 @@ use ark_serialize::Write;
 use ark_std::rand::RngCore;
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use digest::{crypto_common::generic_array::ArrayLength, Digest, DynDigest, OutputSizeUser};
+use jf_advz::{advz::Advz, VidScheme};
 use jf_pcs::{checked_fft_size, prelude::UnivariateKzgPCS, PolynomialCommitmentScheme};
 use jf_utils::field_byte_len;
-use jf_vid::{advz::Advz, VidScheme};
 use sha2::Sha256;
 
 const KB: usize = 1 << 10;

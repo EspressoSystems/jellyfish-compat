@@ -1,0 +1,7 @@
+[type.snap]
+extend-glob = ["*.snap"]
+check-file = false
+
+[default.extend-words]
+# do not correct Forgetten otherwise it breaks elder serialization.
+Forgetten = "Forgetten"

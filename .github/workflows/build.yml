@@ -1,0 +1,82 @@
+name: Build
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  schedule:
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Outdated Builds
+        uses: styfle/cancel-workflow-action@0.12.1
+        with:
+          all_but_latest: true
+          access_token: ${{ github.token }}
+
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: default
+          toolchain: stable
+          override: true
+          default: true
+          components: rustfmt, clippy
+          target: |
+            wasm32-unknown-unknown
+
+      - name: Install nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2025-09-04
+          override: false
+          default: false
+          components: rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        name: Enable Rust Caching
+
+      - name: Spell Check
+        uses: crate-ci/typos@v1.36.2
+
+      - name: Format Check
+        run: cargo +nightly-2025-09-04 fmt -- --check
+
+      - name: Clippy
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ github.token }}
+
+      - name: Audit
+        uses: actions-rs/audit-check@v1
+        with:
+          token: ${{ github.token }}
+
+      - name: Check Bench
+        run: cargo bench --features "test-srs gadgets" --no-run
+
+      - name: Check all tests and binaries compilation
+        run: |
+          cargo check --workspace --tests --lib --bins
+          cargo check --workspace --features 'std parallel test-srs gadgets'
+
+      - name: Check no_std support and WASM compilation
+        env:
+          RUSTFLAGS: '-C target-cpu=generic --cfg curve25519_dalek_backend="u32"'
+        run: |
+          cargo check --no-default-features --features "gadgets"
+          cargo build --target wasm32-unknown-unknown --no-default-features --features "gadgets"
+
+      - name: Test
+        run: |
+          cargo +nightly-2025-09-04 test --release -p jf-merkle-tree-compat --features gadgets -- -Zunstable-options --report-time
+          cargo +nightly-2025-09-04 test --release -p jf-advz --features test-srs -- -Zunstable-options --report-time

@@ -78,5 +78,5 @@ jobs:
 
       - name: Test
         run: |
-          cargo +nightly-2025-09-04 test --release -p jf-merkle-tree --features gadgets -- -Zunstable-options --report-time
+          cargo +nightly-2025-09-04 test --release -p jf-merkle-tree-compat --features gadgets -- -Zunstable-options --report-time
           cargo +nightly-2025-09-04 test --release -p jf-advz --features test-srs -- -Zunstable-options --report-time

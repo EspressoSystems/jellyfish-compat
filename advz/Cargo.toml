@@ -50,7 +50,7 @@ digest = { workspace = true }
 displaydoc = { workspace = true }
 # not a direct dependency, but we need serde;
 # inherited from digest-v0.10.7->crypto_common->generic-array
-generic-array = { version = "0.14.6", features = ["more_lengths", "serde"] }
+generic-array = { version = "1.2.0", features = ["more_lengths", "serde"] }
 itertools = { workspace = true, features = ["use_alloc"] }
 jf-merkle-tree-compat = { git = "https://github.com/EspressoSystems/jellyfish-compat", tag = "jf-merkle-tree-compat-v0.2.0", default-features = false }
 jf-pcs = { workspace = true }

@@ -6,29 +6,31 @@
 
 //! Internal data structures and algorithms for Merkle tree implementations.
 //!
-//! This module provides the core building blocks for various Merkle tree schemes,
-//! including node representations, proof structures, and tree construction algorithms.
+//! This module provides the core building blocks for various Merkle tree
+//! schemes, including node representations, proof structures, and tree
+//! construction algorithms.
 //!
 //! # Key Components
 //!
-//! - [`MerkleNode`]: The fundamental node type representing leaves, branches, and
-//!   forgotten subtrees in a Merkle tree
-//! - [`MerkleTreeCommitment`]: A succinct commitment to a Merkle tree consisting
-//!   of a root hash, height, and leaf count
-//! - [`MerkleProof`]: Proof structures for membership and non-membership verification
+//! - [`MerkleNode`]: The fundamental node type representing leaves, branches,
+//!   and forgotten subtrees in a Merkle tree
+//! - [`MerkleTreeCommitment`]: A succinct commitment to a Merkle tree
+//!   consisting of a root hash, height, and leaf count
+//! - [`MerkleProof`]: Proof structures for membership and non-membership
+//!   verification
 //! - [`MerkleTreeIter`]: Iterator types for traversing tree elements
 //!
 //! # Tree Construction
 //!
 //! This module provides internal functions for building Merkle trees:
 //! - [`build_tree_internal`]: Constructs a full Merkle tree from elements
-//! - [`build_light_weight_tree_internal`]: Constructs a lightweight tree with most
-//!   nodes forgotten except the frontier
+//! - [`build_light_weight_tree_internal`]: Constructs a lightweight tree with
+//!   most nodes forgotten except the frontier
 //!
 //! # Internal Operations
 //!
-//! The module implements core tree operations including lookup, insertion, update,
-//! and forget/remember functionality through methods on [`MerkleNode`].
+//! The module implements core tree operations including lookup, insertion,
+//! update, and forget/remember functionality through methods on [`MerkleNode`].
 
 use super::{
     DigestAlgorithm, Element, Index, LookupResult, MerkleCommitment, NodeValue, ToTraversalPath,
@@ -46,12 +48,13 @@ use tagged_base64::tagged;
 
 /// A node in a Merkle tree.
 ///
-/// This enum represents the different types of nodes that can appear in a Merkle tree:
+/// This enum represents the different types of nodes that can appear in a
+/// Merkle tree:
 /// - Empty nodes represent unoccupied positions
 /// - Branch nodes are internal nodes with children
 /// - Leaf nodes contain actual data elements
-/// - Forgotten subtrees are nodes that have been pruned from memory but whose hash
-///   values are retained
+/// - Forgotten subtrees are nodes that have been pruned from memory but whose
+///   hash values are retained
 ///
 /// The generic parameters are:
 /// - `E`: The element type stored in leaf nodes
@@ -101,10 +104,10 @@ pub enum MerkleNode<E: Element, I: Index, T: NodeValue> {
     },
     /// A subtree that has been forgotten from memory.
     ///
-    /// This variant retains only the hash value of the subtree, allowing the tree
-    /// commitment to remain valid while reducing memory usage. Forgotten subtrees
-    /// can be restored using the `remember_internal` method if a valid proof is
-    /// provided.
+    /// This variant retains only the hash value of the subtree, allowing the
+    /// tree commitment to remain valid while reducing memory usage.
+    /// Forgotten subtrees can be restored using the `remember_internal`
+    /// method if a valid proof is provided.
     ForgettenSubtree {
         /// Merkle hash value of this forgotten subtree
         #[serde(with = "canonical")]
@@ -138,7 +141,8 @@ where
 
     /// Checks whether this node is a forgotten subtree.
     ///
-    /// Returns `true` if the node is a `ForgettenSubtree` variant, `false` otherwise.
+    /// Returns `true` if the node is a `ForgettenSubtree` variant, `false`
+    /// otherwise.
     #[inline]
     pub fn is_forgotten(&self) -> bool {
         matches!(self, Self::ForgettenSubtree { .. })
@@ -147,22 +151,24 @@ where
 
 /// A Merkle path representing nodes from a leaf to the root.
 ///
-/// This is a bottom-up list of nodes that proves the inclusion or exclusion of an
-/// element in the tree. The first element is the leaf (or empty) node, and each
-/// subsequent element is a parent node, with the last element being at the root level.
+/// This is a bottom-up list of nodes that proves the inclusion or exclusion of
+/// an element in the tree. The first element is the leaf (or empty) node, and
+/// each subsequent element is a parent node, with the last element being at the
+/// root level.
 ///
 /// Used in [`MerkleProof`] to verify membership and non-membership claims.
 pub type MerklePath<E, I, T> = Vec<MerkleNode<E, I, T>>;
 
 /// A succinct commitment to a Merkle tree.
 ///
-/// This structure represents a compact commitment to the entire Merkle tree state,
-/// consisting of:
+/// This structure represents a compact commitment to the entire Merkle tree
+/// state, consisting of:
 /// - The root hash digest
 /// - The tree height
 /// - The number of leaves in the tree
 ///
-/// This commitment can be used to verify proofs without access to the full tree.
+/// This commitment can be used to verify proofs without access to the full
+/// tree.
 ///
 /// # Examples
 ///
@@ -234,12 +240,13 @@ impl<T: NodeValue> MerkleCommitment<T> for MerkleTreeCommitment<T> {
 /// A proof of membership or non-membership in a Merkle tree.
 ///
 /// This structure contains all information needed to verify that an element is
-/// (or is not) present at a specific position in the tree. The proof consists of:
+/// (or is not) present at a specific position in the tree. The proof consists
+/// of:
 /// - The position/index being proved
 /// - A Merkle path from the leaf to the root
 ///
-/// The proof can be verified against a [`MerkleTreeCommitment`] without access to
-/// the full tree.
+/// The proof can be verified against a [`MerkleTreeCommitment`] without access
+/// to the full tree.
 ///
 /// # Type Parameters
 ///
@@ -303,8 +310,9 @@ where
 
     /// Returns the element associated with this proof, if any.
     ///
-    /// Returns `Some(&element)` for membership proofs, or `None` for non-membership
-    /// proofs (where the first node in the path is not a leaf).
+    /// Returns `Some(&element)` for membership proofs, or `None` for
+    /// non-membership proofs (where the first node in the path is not a
+    /// leaf).
     pub fn elem(&self) -> Option<&E> {
         match self.proof.first() {
             Some(MerkleNode::Leaf { elem, .. }) => Some(elem),
@@ -315,9 +323,9 @@ where
 
 /// Builds a complete Merkle tree from a collection of elements.
 ///
-/// This function constructs a full Merkle tree with all leaves and internal nodes
-/// present in memory. The tree is built bottom-up, with leaves at the lowest level
-/// and branches connecting them up to a single root.
+/// This function constructs a full Merkle tree with all leaves and internal
+/// nodes present in memory. The tree is built bottom-up, with leaves at the
+/// lowest level and branches connecting them up to a single root.
 ///
 /// # Type Parameters
 ///
@@ -341,8 +349,8 @@ where
 ///
 /// # Errors
 ///
-/// Returns [`MerkleTreeError::ExceedCapacity`] if the number of elements exceeds
-/// the tree's capacity for the given height.
+/// Returns [`MerkleTreeError::ExceedCapacity`] if the number of elements
+/// exceeds the tree's capacity for the given height.
 ///
 /// # Examples
 ///
@@ -436,13 +444,14 @@ where
 
 /// Builds a lightweight Merkle tree with most nodes forgotten.
 ///
-/// This function constructs a memory-efficient Merkle tree where all leaves except
-/// the last one (the frontier) are immediately forgotten. This is useful for
-/// append-only trees where only the most recent state needs to be in memory.
+/// This function constructs a memory-efficient Merkle tree where all leaves
+/// except the last one (the frontier) are immediately forgotten. This is useful
+/// for append-only trees where only the most recent state needs to be in
+/// memory.
 ///
-/// The resulting tree maintains the correct root hash but keeps only the frontier
-/// leaf and path in memory, with all other nodes replaced by `ForgettenSubtree`
-/// variants containing just their hash values.
+/// The resulting tree maintains the correct root hash but keeps only the
+/// frontier leaf and path in memory, with all other nodes replaced by
+/// `ForgettenSubtree` variants containing just their hash values.
 ///
 /// # Type Parameters
 ///
@@ -466,8 +475,8 @@ where
 ///
 /// # Errors
 ///
-/// Returns [`MerkleTreeError::ExceedCapacity`] if the number of elements exceeds
-/// the tree's capacity for the given height, or
+/// Returns [`MerkleTreeError::ExceedCapacity`] if the number of elements
+/// exceeds the tree's capacity for the given height, or
 /// [`MerkleTreeError::ParametersError`] if the tree size would be too large.
 ///
 /// # Examples
@@ -582,8 +591,9 @@ where
 /// Computes the digest (hash) of a branch node from its children.
 ///
 /// This function takes a slice of child nodes and computes the hash value that
-/// should be stored in their parent branch node. It extracts the hash value from
-/// each child node and then applies the digest algorithm to the resulting array.
+/// should be stored in their parent branch node. It extracts the hash value
+/// from each child node and then applies the digest algorithm to the resulting
+/// array.
 ///
 /// # Type Parameters
 ///
@@ -603,9 +613,7 @@ where
 /// # Errors
 ///
 /// Returns an error if the digest algorithm fails.
-pub fn digest_branch<E, H, I, T>(
-    data: &[Arc<MerkleNode<E, I, T>>],
-) -> Result<T, MerkleTreeError>
+pub fn digest_branch<E, H, I, T>(data: &[Arc<MerkleNode<E, I, T>>]) -> Result<T, MerkleTreeError>
 where
     E: Element,
     H: DigestAlgorithm<E, I, T>,
@@ -625,11 +633,13 @@ where
 {
     /// Forgets a leaf from the Merkle tree, pruning it from memory.
     ///
-    /// This method removes a leaf and returns a new tree with the leaf replaced by
-    /// a `ForgettenSubtree` node. If all leaves under a branch node are forgotten,
-    /// the entire branch may be collapsed into a single `ForgettenSubtree` node.
+    /// This method removes a leaf and returns a new tree with the leaf replaced
+    /// by a `ForgettenSubtree` node. If all leaves under a branch node are
+    /// forgotten, the entire branch may be collapsed into a single
+    /// `ForgettenSubtree` node.
     ///
-    /// **Warning**: This method can break non-membership proofs. See issue #495.
+    /// **Warning**: This method can break non-membership proofs. See issue
+    /// #495.
     ///
     /// # Arguments
     ///
@@ -640,8 +650,9 @@ where
     ///
     /// A tuple containing:
     /// - A new tree with the leaf forgotten
-    /// - A `LookupResult` containing either the forgotten element with its proof,
-    ///   `NotInMemory` if already forgotten, or `NotFound` if the position was empty
+    /// - A `LookupResult` containing either the forgotten element with its
+    ///   proof, `NotInMemory` if already forgotten, or `NotFound` if the
+    ///   position was empty
     #[allow(clippy::type_complexity)]
     pub fn forget_internal(
         &self,
@@ -743,7 +754,8 @@ where
     /// Re-inserts a forgotten leaf into the Merkle tree.
     ///
     /// This method restores a previously forgotten subtree using a valid proof.
-    /// The proof must have been previously verified to match the tree's commitment.
+    /// The proof must have been previously verified to match the tree's
+    /// commitment.
     ///
     /// # Type Parameters
     ///
@@ -753,7 +765,8 @@ where
     /// # Arguments
     ///
     /// * `height` - The height of the current node in the tree
-    /// * `traversal_path` - The path of branch indices to reach the target position
+    /// * `traversal_path` - The path of branch indices to reach the target
+    ///   position
     /// * `path_values` - Expected hash values along the path for verification
     /// * `proof` - The Merkle proof containing the nodes to restore
     ///
@@ -764,8 +777,8 @@ where
     ///
     /// # Errors
     ///
-    /// Returns [`MerkleTreeError::InconsistentStructureError`] if the proof doesn't
-    /// match the tree structure or if hash values don't align.
+    /// Returns [`MerkleTreeError::InconsistentStructureError`] if the proof
+    /// doesn't match the tree structure or if hash values don't align.
     pub fn remember_internal<H, const ARITY: usize>(
         &self,
         height: usize,
@@ -834,8 +847,8 @@ where
 
     /// Looks up an element at a given index in the tree.
     ///
-    /// This method traverses the tree following the provided traversal path to find
-    /// the element at the specified position. It returns either:
+    /// This method traverses the tree following the provided traversal path to
+    /// find the element at the specified position. It returns either:
     /// - The element with a membership proof if present
     /// - A non-membership proof if the position is empty
     /// - `NotInMemory` if the position has been forgotten
@@ -843,7 +856,8 @@ where
     /// # Arguments
     ///
     /// * `height` - The height of the current node in the tree
-    /// * `traversal_path` - The path of branch indices to reach the target position
+    /// * `traversal_path` - The path of branch indices to reach the target
+    ///   position
     ///
     /// # Returns
     ///
@@ -916,9 +930,9 @@ where
     /// Updates the element at a given index using a transformation function.
     ///
     /// This method applies a function to the element at the specified position,
-    /// allowing for insertion, update, or removal operations. The function receives
-    /// the current element (or `None` if empty) and returns the new element (or
-    /// `None` to remove).
+    /// allowing for insertion, update, or removal operations. The function
+    /// receives the current element (or `None` if empty) and returns the
+    /// new element (or `None` to remove).
     ///
     /// # Type Parameters
     ///
@@ -930,7 +944,8 @@ where
     ///
     /// * `height` - The height of the current node in the tree
     /// * `pos` - The index of the element to update
-    /// * `traversal_path` - The path of branch indices to reach the target position
+    /// * `traversal_path` - The path of branch indices to reach the target
+    ///   position
     /// * `f` - The update function: `Option<&E> -> Option<E>`
     ///
     /// # Returns
@@ -942,8 +957,8 @@ where
     ///
     /// # Errors
     ///
-    /// Returns [`MerkleTreeError::ForgottenLeaf`] if the target position has been
-    /// forgotten, or other errors if hashing fails.
+    /// Returns [`MerkleTreeError::ForgottenLeaf`] if the target position has
+    /// been forgotten, or other errors if hashing fails.
     #[allow(clippy::type_complexity)]
     pub fn update_with_internal<H, const ARITY: usize, F>(
         &self,
@@ -1077,9 +1092,9 @@ where
 {
     /// Performs batch insertion of elements into the tree.
     ///
-    /// This method efficiently inserts multiple elements at once, starting from a
-    /// given position. It's optimized for append-only operations where elements are
-    /// added sequentially.
+    /// This method efficiently inserts multiple elements at once, starting from
+    /// a given position. It's optimized for append-only operations where
+    /// elements are added sequentially.
     ///
     /// # Type Parameters
     ///
@@ -1103,8 +1118,8 @@ where
     /// # Errors
     ///
     /// Returns [`MerkleTreeError::ExistingLeaf`] if trying to insert into an
-    /// occupied position, or [`MerkleTreeError::ForgottenLeaf`] if the insertion
-    /// position has been forgotten.
+    /// occupied position, or [`MerkleTreeError::ForgottenLeaf`] if the
+    /// insertion position has been forgotten.
     pub fn extend_internal<H, const ARITY: usize>(
         &self,
         height: usize,
@@ -1195,7 +1210,8 @@ where
         }
     }
 
-    /// Performs batch insertion while automatically forgetting non-frontier leaves.
+    /// Performs batch insertion while automatically forgetting non-frontier
+    /// leaves.
     ///
     /// Similar to [`extend_internal`](Self::extend_internal), but this function
     /// automatically forgets leaves that are not part of the current frontier,
@@ -1218,14 +1234,15 @@ where
     /// # Returns
     ///
     /// Returns `Ok((new_tree, count))` where:
-    /// - `new_tree`: The tree with elements inserted and non-frontier leaves forgotten
+    /// - `new_tree`: The tree with elements inserted and non-frontier leaves
+    ///   forgotten
     /// - `count`: The number of elements successfully inserted
     ///
     /// # Errors
     ///
     /// Returns [`MerkleTreeError::ExistingLeaf`] if trying to insert into an
-    /// occupied position, or [`MerkleTreeError::ForgottenLeaf`] if the insertion
-    /// position has been forgotten.
+    /// occupied position, or [`MerkleTreeError::ForgottenLeaf`] if the
+    /// insertion position has been forgotten.
     pub fn extend_and_forget_internal<H, const ARITY: usize>(
         &self,
         height: usize,
@@ -1338,9 +1355,10 @@ where
 {
     /// Verifies a membership proof against an expected root hash.
     ///
-    /// This method recomputes the root hash from the proof and compares it to the
-    /// expected value. A successful verification indicates that the element is
-    /// indeed present at the claimed position in a tree with the given root.
+    /// This method recomputes the root hash from the proof and compares it to
+    /// the expected value. A successful verification indicates that the
+    /// element is indeed present at the claimed position in a tree with the
+    /// given root.
     ///
     /// # Type Parameters
     ///
@@ -1352,13 +1370,14 @@ where
     ///
     /// # Returns
     ///
-    /// Returns `Ok(Ok(()))` if the proof is valid, `Ok(Err(()))` if the proof is
-    /// invalid (root mismatch), or `Err(MerkleTreeError)` if the proof is malformed.
+    /// Returns `Ok(Ok(()))` if the proof is valid, `Ok(Err(()))` if the proof
+    /// is invalid (root mismatch), or `Err(MerkleTreeError)` if the proof
+    /// is malformed.
     ///
     /// # Errors
     ///
-    /// Returns [`MerkleTreeError::InconsistentStructureError`] if the proof structure
-    /// is invalid or incompatible with the tree parameters.
+    /// Returns [`MerkleTreeError::InconsistentStructureError`] if the proof
+    /// structure is invalid or incompatible with the tree parameters.
     pub fn verify_membership_proof<H>(
         &self,
         expected_root: &T,
@@ -1410,9 +1429,9 @@ where
 
     /// Verifies a non-membership proof against an expected root hash.
     ///
-    /// This method verifies that a specific position is empty in a tree with the
-    /// given root. It recomputes the root hash from the non-membership proof and
-    /// compares it to the expected value.
+    /// This method verifies that a specific position is empty in a tree with
+    /// the given root. It recomputes the root hash from the non-membership
+    /// proof and compares it to the expected value.
     ///
     /// # Type Parameters
     ///
@@ -1430,12 +1449,9 @@ where
     ///
     /// # Errors
     ///
-    /// Returns [`MerkleTreeError::InconsistentStructureError`] if the proof structure
-    /// is invalid or incompatible with the tree parameters.
-    pub fn verify_non_membership_proof<H>(
-        &self,
-        expected_root: &T,
-    ) -> Result<bool, MerkleTreeError>
+    /// Returns [`MerkleTreeError::InconsistentStructureError`] if the proof
+    /// structure is invalid or incompatible with the tree parameters.
+    pub fn verify_non_membership_proof<H>(&self, expected_root: &T) -> Result<bool, MerkleTreeError>
     where
         H: DigestAlgorithm<E, I, T>,
     {
@@ -1476,8 +1492,9 @@ where
 
 /// An iterator over the elements in a Merkle tree.
 ///
-/// This iterator traverses the tree in order, yielding references to the index and
-/// element of each leaf that is currently in memory. Forgotten leaves are skipped.
+/// This iterator traverses the tree in order, yielding references to the index
+/// and element of each leaf that is currently in memory. Forgotten leaves are
+/// skipped.
 ///
 /// # Examples
 ///
@@ -1543,9 +1560,9 @@ where
 
 /// An owned iterator over the elements in a Merkle tree.
 ///
-/// Unlike [`MerkleTreeIter`], this iterator takes ownership of the tree nodes and
-/// yields owned values rather than references. This is useful when you need to
-/// consume the tree or move elements out of it.
+/// Unlike [`MerkleTreeIter`], this iterator takes ownership of the tree nodes
+/// and yields owned values rather than references. This is useful when you need
+/// to consume the tree or move elements out of it.
 ///
 /// # Examples
 ///

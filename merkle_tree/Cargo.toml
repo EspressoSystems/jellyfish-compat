@@ -1,6 +1,6 @@
 [package]
 name = "jf-merkle-tree-compat"
-version = "0.3.1"
+version = "0.4.0"
 description = "Various Merkle tree implementations."
 authors = { workspace = true }
 edition = { workspace = true }
@@ -43,7 +43,7 @@ criterion = "0.7.0"
 insta = { version = "1.43.1", features = ["serde", "yaml"] }
 paste = "1.0"
 proptest = "1.7.0"
-sha2 = { workspace = true }
+sha2 = { workspace = true, features = ["std"] }
 
 [target.wasm32-unknown-unknown.dependencies]
 # not directly used, but used by every member crate via ark-std

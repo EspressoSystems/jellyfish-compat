@@ -51,7 +51,6 @@ inherits = "release"
 debug = true
 
 [patch.crates-io]
-ark-r1cs-std = { path = "vendor/ark-r1cs-std-dummy" }
 tagged-base64 = { git = "https://github.com/EspressoSystems/tagged-base64", branch = "ab/ark-0.6" }
 
 # Build workspace crates against each other rather than against their

@@ -1,6 +1,6 @@
 [package]
 name = "jf-advz"
-version = "0.2.4"
+version = "0.3.0"
 description = "A Verifiable information dispersal (VID) scheme."
 authors = { workspace = true }
 edition = { workspace = true }
@@ -52,7 +52,7 @@ displaydoc = { workspace = true }
 # inherited from digest-v0.10.7->crypto_common->generic-array
 generic-array = { version = "0.14.6", features = ["more_lengths", "serde"] }
 itertools = { workspace = true, features = ["use_alloc"] }
-jf-merkle-tree-compat = { git = "https://github.com/EspressoSystems/jellyfish-compat", tag = "jf-merkle-tree-compat-v0.3.1", default-features = false }
+jf-merkle-tree-compat = { git = "https://github.com/EspressoSystems/jellyfish-compat", branch = "ab/ark-0.6", default-features = false }
 jf-pcs = { workspace = true }
 jf-utils = { workspace = true }
 rayon = { workspace = true, optional = true }
@@ -67,7 +67,7 @@ ark-ed-on-bls12-381 = { workspace = true }
 ark-ed-on-bn254 = { workspace = true }
 criterion = "0.7.0"
 jf-pcs = { workspace = true, features = ["test-srs"] }
-sha2 = { workspace = true }
+sha2 = { workspace = true, features = ["std"] }
 
 [target.wasm32-unknown-unknown.dependencies]
 # not directly used, but used by every member crate via ark-std

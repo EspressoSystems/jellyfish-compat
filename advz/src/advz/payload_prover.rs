@@ -501,6 +501,30 @@ mod tests {
     }
 
     #[test]
+    fn large_range_proof_rejects_subslice_shifted_by_whole_elems() {
+        let mut rng = jf_utils::test_rng();
+        let srs = init_srs(8, &mut rng);
+        let mut advz = Advz::<Bn254, Sha256>::with_multiplicity(6, 4, 2, srs).unwrap();
+        let payload: Vec<u8> = (0u8..200).collect();
+        let d = advz.disperse(&payload).unwrap();
+        let honest = 1..5;
+        let large: LargeRangeProof<_> = advz.payload_proof(&payload, honest.clone()).unwrap();
+
+        // Whole-element shifts keep the prefix and suffix byte lengths valid,
+        // so only the prefix and suffix elem counts reject them.
+        let cap = elem_byte_capacity::<<Bn254 as Pairing>::ScalarField>();
+        for k in [1, 4] {
+            let stmt = Statement {
+                payload_subslice: &payload[honest.clone()],
+                range: honest.start + k * cap..honest.end + k * cap,
+                commit: &d.commit,
+                common: &d.common,
+            };
+            assert!(advz.payload_verify(stmt, &large).is_err());
+        }
+    }
+
+    #[test]
     fn small_range_proof_with_extra_element_is_rejected() {
         let mut rng = jf_utils::test_rng();
         let srs = init_srs(8, &mut rng);
